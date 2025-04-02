@@ -3,37 +3,33 @@ import cors from "cors";
 import { agent } from "./agent.js";
 
 const app = express();
-app.use(cors());
+const port = 3001;
+
 app.use(express.json());
+app.use(cors({ origin: "*" }));
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Hello World");
 });
 
 app.post("/generate", async (req, res) => {
-  try {
-    const result = await agent.invoke(
-      {
-        messages: [
-          {
-            role: "user",
-            content: "What's the weather in Tokyo?",
-          },
-        ],
-      },
-      {
-        configurable: {
-          thread_id: "42",
+  const { prompt, thread_id } = req.body;
+
+  const result = await agent.invoke(
+    {
+      messages: [
+        {
+          role: "user",
+          content: prompt,
         },
-      }
-    );
-    res.json(result.messages.at(-1)?.content);
-  } catch (error) {
-    console.error("Agent invocation error:", error);
-    res.status(500).json({ error: error.message });
-  }
+      ],
+    },
+    { configurable: { thread_id } }
+  );
+
+  res.json(result.messages.at(-1)?.content);
 });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
