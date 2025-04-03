@@ -8,7 +8,7 @@ const weatherTool = tool(
   async ({ query }) => {
     console.log("query", query);
 
-    return `The weather in Tokyo is sunny.`;
+    return { message: `The weather in Tokyo is sunny.` };
   },
   {
     name: "weather",
@@ -18,37 +18,17 @@ const weatherTool = tool(
     }),
   }
 );
-async function evalAndCaptureOutput(code) {
-  const oldLog = console.log;
-  const oldError = console.error;
-
-  const output = [];
-  let errorOutput = [];
-
-  console.log = (...args) => output.push(args.join(" "));
-  console.error = (...args) => errorOutput.push(args.join(" "));
-
-  try {
-    await eval(code);
-  } catch (error) {
-    errorOutput.push(error.message);
-  }
-
-  console.log = oldLog;
-  console.error = oldError;
-
-  return { stdout: output.join("\n"), stderr: errorOutput.join("\n") };
-}
 
 const jsExecuter = tool(
   async ({ code }) => {
-    console.log("I should run this code: ", code);
-
-    console.log("-----------------------");
-    const result = await evalAndCaptureOutput(code);
-    console.log("-----------------------");
-    console.log("result: ", result);
-
+    const response = await fetch(process.env.EXECUTOR_URI, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+    const result = await response.json();
     return result;
   },
   {
